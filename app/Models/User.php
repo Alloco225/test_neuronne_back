@@ -18,7 +18,10 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
+        'age',
+        'picture_path',
         'email',
         'password',
     ];
@@ -45,4 +48,11 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+
+    public function getPictureUrlAttribute(){
+        // TODO ajouter logique avec storage and stuff
+        return $this->picture_path;
+    }
+
 }
