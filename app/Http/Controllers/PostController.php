@@ -23,12 +23,16 @@ class PostController extends Controller
                 'sortBy' => 'nullable|string',
                 'order' => 'nullable|string|in:asc,desc',
             ]);
+            $select = $request->select;
 
-            $select = explode(',', $request->select);
-            $validSelects = Schema::getColumnListing('posts');
-            foreach ($select as $value) {
-                if (!in_array($value, $validSelects)) {
-                    throw new \Exception("select value incorrect '$value'");
+            if(!!$select){
+                $select =  explode(',', $select);
+                $validSelects = Schema::getColumnListing('posts');
+                if($select == '')
+                foreach ($select as $value) {
+                    if (!in_array($value, $validSelects)) {
+                        throw new \Exception("select value incorrect '$value'");
+                    }
                 }
             }
 
