@@ -19,8 +19,17 @@ class Post extends Model
     {
         // * Mettre à jour le slug automatiquement à partir du titre
         // static::created(function (Post $post) {
-        static::updated(function (Post $post) {
+        static::created(function (Post $post) {
             $post->slug = Str::slug($post->title);
+            $post->save();
+        });
+        static::updated(function (Post $post) {
+            $newSlug = Str::slug($post->title);
+
+            if($post->slug != $newSlug){
+                $post->slug = $newSlug;
+                $post->save();
+            }
         });
     }
 

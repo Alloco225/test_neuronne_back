@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Schema;
 
 class PostController extends Controller
 {
@@ -12,40 +13,62 @@ class PostController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user();
+        // $user = $request->user();
+        try {
+            $request->validate([
+                'q' => 'nullable|string',
+                'limit' => 'nullable|string',
+                'skip' => 'nullable|integer',
+                'select' => 'nullable|string',
+                'sortBy' => 'nullable|string',
+                'order' => 'nullable|string|in:asc,desc',
+            ]);
 
-        $search = $request->q;
-        $limit = $request->limit;
-        $skip = $request->skip;
-        $select = $request->select;
-        $sortBy = $request->sortBy;
-        $order = $request->order ?? 'desc';
+            $select = explode(',',$request->select);
+            $validSelects =  Schema::getColumnListing('posts');
+            foreach ($select as $value) {
+                if(!in_array($value, $validSelects)){
+                    throw new \Exception("select value incorrect '$value'");
+                }
+            }
 
-        // $posts =  Post::when($search, function($query, $search){
-        $posts = $user->posts->when($search, function($query, $search){
-            return $query
-            ->where('title', 'like', "%$search%")
-            ->orWhere('slug', 'like', "%$search%")
-            ->orWhere('content', 'like', "%$search%");
-        })
-        ->when($sortBy, function($query, $sortBy) use ($order){
-            return $query
-            ->when($order, function($query, $order) use ($sortBy){
-                $query->sortBy($sortBy, $order);
-            });
-        }, function($query){
-            return $query->latest();
-        })
-        ->when($select, function($query, $select){
-            return $query->select($select);
-        })
-        ->when($skip, function($query, $skip){
-            return $query->skip($skip);
-        })
-        ->when($limit, function($query, $limit){
-            return $query->limit($limit);
-        });
-        return response()->json($posts);
+            $search = $request->q;
+            $limit = $request->limit;
+            $skip = $request->skip;
+            $sortBy = $request->sortBy;
+            $order = $request->order ?? 'desc';
+            $posts_unfiltered = Post::all();
+            // $posts = $user->posts->when($search, function($query, $search){
+            $posts =  Post::when($search, function($query, $search){
+                return $query
+                ->where('title', 'like', "%$search%")
+                ->orWhere('slug', 'like', "%$search%")
+                ->orWhere('content', 'like', "%$search%");
+            })
+            ->when($sortBy, function($query, $sortBy) use ($order){
+                return $query
+                ->when($order, function($query, $order) use ($sortBy){
+                    $query->orderBy($sortBy, $order);
+                });
+            }, function($query) use ($order){
+                return $query->orderBy('last_update', $order);
+            })
+            ->when($select, function($query, $select){
+                return $query->select($select);
+            })
+            ->when($skip, function($query, $skip){
+                return $query->skip($skip);
+            })
+            ->when($limit, function($query, $limit){
+                return $query->limit($limit);
+            })->get();
+            return response()->json([$posts, $posts_unfiltered]);
+        } catch (\Throwable $th) {
+            // if(env('APP_DEBUG')){
+            //     throw $th;
+            // }
+            return response()->json($th->getMessage(), 400);
+        }
     }
 
     /**

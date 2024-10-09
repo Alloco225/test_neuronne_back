@@ -14,10 +14,13 @@ return new class extends Migration
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('slug')->unique();
+            $table->string('slug')->unique()->nullable();
             $table->text('content');
             $table->string('image_path')->nullable();
-            $table->timestamps();
+            $table->foreignId('user_id')->on('users')->onDelete('cascade');
+            $table->timestamp('created_at');
+            $table->timestamp('last_update');
+            // $table->timestamps();
         });
     }
 
