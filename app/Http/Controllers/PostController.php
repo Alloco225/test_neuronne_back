@@ -156,7 +156,7 @@ class PostController extends Controller
             $validatedData = $request->validate([
                 'title' => "required|string",
                 'content' => "required",
-                'image_file' => "required|file|mimes:png,jpg",
+                // 'image_file' => "required|file|mimes:png,jpg",
             ]);
             $imagePath = null;
             if ($request->hasFile('image_file')) {
