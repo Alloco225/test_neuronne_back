@@ -26,7 +26,7 @@ class PostController extends Controller
             $select = $request->select;
 
             if(!!$select){
-                $select =  explode(',', $select);
+                $select = explode(',', $select);
                 $validSelects = Schema::getColumnListing('posts');
                 if($select == '')
                 foreach ($select as $value) {
@@ -99,18 +99,22 @@ class PostController extends Controller
                 'content' => "required",
                 'image_file' => "required|file|mimes:png,jpg",
             ]);
-            $imagePath = null;
-            if ($request->hasFile('image_file')) {
-                $image = $request->file('image_file');
-                $path = $image->storeAs('public/posts', $validatedData['slug'] . '_' . time() . '.' . $image->getClientOriginalExtension());
-                $imagePath = str_replace('public', '', $path);
-            }
+
             $post = Post::create([
                 'user_id' => $user->id,
                 'title' => $validatedData['title'],
                 'content' => $validatedData['content'],
-                'image_path' => $imagePath,
+                // 'image_path' => $imagePath,
             ]);
+
+            $imagePath = null;
+            if ($request->hasFile('image_file')) {
+                $image = $request->file('image_file');
+                $path = $image->storeAs('public/posts', $post->slug . '_' . time() . '.' . $image->getClientOriginalExtension());
+                $imagePath = str_replace('public', '', $path);
+            }
+            $post->image_path = $imagePath;
+            $post->save();
 
             return response()->json($post);
         } catch (\Throwable $th) {
@@ -164,7 +168,7 @@ class PostController extends Controller
             $imagePath = null;
             if ($request->hasFile('image_file')) {
                 $image = $request->file('image_file');
-                $path = $image->storeAs('public/posts', $validatedData['slug'] . '_' . time() . '.' . $image->getClientOriginalExtension());
+                $path = $image->storeAs('public/posts', $post->slug . '_' . time() . '.' . $image->getClientOriginalExtension());
                 $imagePath = str_replace('public', '', $path);
                 $oldImage = $post->image_path;
                 if (isset($oldImage)) {
