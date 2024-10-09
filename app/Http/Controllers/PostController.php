@@ -38,6 +38,10 @@ class PostController extends Controller
     {
         //
     }
+    public function getPostBySlug(Post $post)
+    {
+        return response()->json($post);
+    }
 
     /**
      * Show the form for editing the specified resource.
