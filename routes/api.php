@@ -7,7 +7,10 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
-    Route::delete('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('user', [AuthController::class, 'user']);
+        Route::delete('logout', [AuthController::class, 'logout']);
+    });
 });
 
 Route::middleware('auth:sanctum')->group(function () {
