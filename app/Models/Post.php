@@ -20,6 +20,7 @@ class Post extends Model
     {
         $array = parent::toArray();
         $array['image_url'] = $this->image_url;
+        unset($array['image_path']);
         return $array;
     }
 

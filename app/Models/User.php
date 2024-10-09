@@ -55,6 +55,8 @@ class User extends Authenticatable
     {
         $array = parent::toArray();
         $array['picture_url'] = $this->picture_url;
+        unset($array['picture_path']);
+
         return $array;
     }
 
