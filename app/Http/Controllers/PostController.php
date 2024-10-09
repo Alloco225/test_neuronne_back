@@ -63,7 +63,7 @@ class PostController extends Controller
                 })
                 ->where('user_id', $user->id)
 
-                // ->with('user')
+                ->with('user')
                 ->get();
             return response()->json($posts);
         } catch (\Throwable $th) {
@@ -93,7 +93,7 @@ class PostController extends Controller
             $validatedData = $request->validate([
                 'title' => "required|string",
                 'content' => "required",
-                // 'image_file' => "required|file|mimes:png,jpg",
+                'image_file' => "required|file|mimes:png,jpg",
             ]);
             $imagePath = null;
             if ($request->hasFile('image_file')) {
@@ -150,13 +150,12 @@ class PostController extends Controller
         try {
             $user = $request->user();
 
-            // $post = Post::findOrFail($postId);
             $post = $user->posts->findOrFail($postId);
 
             $validatedData = $request->validate([
                 'title' => "required|string",
                 'content' => "required",
-                // 'image_file' => "required|file|mimes:png,jpg",
+                'image_file' => "required|file|mimes:png,jpg",
             ]);
             $imagePath = null;
             if ($request->hasFile('image_file')) {
@@ -179,9 +178,9 @@ class PostController extends Controller
             if (isset($imagePath)) {
                 \Storage::delete('public/' . $imagePath);
             }
-            // if(env('APP_DEBUG')){
-            //     throw $th;
-            // }
+            if(env('APP_DEBUG')){
+                throw $th;
+            }
             return response()->json($th->getMessage(), 400);
         }
 
@@ -194,7 +193,6 @@ class PostController extends Controller
     {
         //
         $user = $request->user();
-        // $post = Post::find($postId);
         $post = $user->posts->find($postId);
         if (!$post) {
             return response()->json(false, 404);
