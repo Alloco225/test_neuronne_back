@@ -37,7 +37,6 @@ class PostController extends Controller
             $skip = $request->skip;
             $sortBy = $request->sortBy;
             $order = $request->order ?? 'desc';
-            $posts_unfiltered = Post::all();
 
             $posts = Post::when($search, function($query, $search){
                 return $query
@@ -64,9 +63,9 @@ class PostController extends Controller
                 })
                 ->where('user_id', $user->id)
 
-                ->with('user')
+                // ->with('user')
                 ->get();
-            return response()->json([$posts, $posts_unfiltered]);
+            return response()->json($posts);
         } catch (\Throwable $th) {
             // if(env('APP_DEBUG')){
             //     throw $th;

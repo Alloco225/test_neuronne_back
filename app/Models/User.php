@@ -50,15 +50,23 @@ class User extends Authenticatable
         ];
     }
 
-
-    public function getPictureUrlAttribute(){
-        // TODO ajouter logique avec storage and stuff
-        return $this->picture_path;
+    public function getPictureUrlAttribute()
+    {
+        $img = $this->picture_path;
+        if (!$img) {
+            return null;
+        }
+        if (str_starts_with($img, 'http')) {
+            return $img;
+        }
+        $link = '/storage' . ($img[0] == '/' ? $img : '/' . $img);
+        return asset($link);
     }
 
     // ** RELATIONSHIPS
 
-    public function posts(){
+    public function posts()
+    {
         return $this->hasMany(Post::class);
     }
 }

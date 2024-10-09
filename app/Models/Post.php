@@ -25,13 +25,20 @@ class Post extends Model
         static::updated(function (Post $post) {
             $post->updateSlug();
         });
+        static::deleted(function (Post $post) {
+            // delete image
+            if ($post->imagePath) {
+                \Storage::delete('public/' . $post->imagePath);
+            }
+        });
     }
 
     public function updateSlug()
     {
         $slug = Str::slug($this->title);
-        if(!$this->slug){
+        if (!$this->slug) {
             if (self::where('slug', $slug)->first()) {
+                $this->delete();
                 throw new \Exception(message: __("validation.unique", ['attribute' => 'title']));
             }
         }
@@ -45,7 +52,16 @@ class Post extends Model
     // * image_url attribut calculé
     public function getImageUrlAttribute()
     {
-        return $this->image_path;
+        $img = $this->image_path;
+        if (!$img) {
+            return null;
+        }
+        if (str_starts_with($img, 'http')) {
+            return $img;
+        }
+        $link = '/storage' . ($img[0] == '/' ? $img : '/' . $img);
+        return asset($link);
+
     }
 
     // ** RELATIONSHIPS
