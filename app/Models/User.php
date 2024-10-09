@@ -55,4 +55,9 @@ class User extends Authenticatable
         return $this->picture_path;
     }
 
+    // ** RELATIONSHIPS
+
+    public function posts(){
+        return $this->hasMany(Post::class);
+    }
 }

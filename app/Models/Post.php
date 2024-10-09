@@ -29,4 +29,10 @@ class Post extends Model
         return $this->image_path;
     }
 
+
+    // ** RELATIONSHIPS
+
+    public function user(){
+        return $this->belongsTo(User::class);
+    }
 }
