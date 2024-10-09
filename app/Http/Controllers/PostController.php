@@ -104,10 +104,8 @@ class PostController extends Controller
 
             return response()->json($post);
         } catch (\Throwable $th) {
-            if (isset($images)) {
-                foreach ($images as $image) {
-                    \Storage::delete('public/' . $image);
-                }
+            if (isset($imagePath)) {
+                \Storage::delete('public/' . $imagePath);
             }
             // if(env('APP_DEBUG')){
             //     throw $th;
@@ -140,17 +138,57 @@ class PostController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Post $post)
+    public function update(Request $request, $postId)
     {
-        //
+        try {
+            // $user = $request->user();
+
+            $post = Post::findOrFail($postId);
+
+            $validatedData = $request->validate([
+                'title' => "required|string",
+                'content' => "required",
+                'image_file' => "required|file|mimes:png,jpg",
+            ]);
+            $imagePath = null;
+            if ($request->hasFile('image_file')) {
+                $image = $request->file('image_file');
+                $path = $image->storeAs('public/posts', $validatedData['slug'] . '_' . time() . '.' . $image->getClientOriginalExtension());
+                $imagePath = str_replace('public', '', $path);
+                $oldImage = $post->image_path;
+                if (isset($oldImage)) {
+                    \Storage::delete('public/' . $oldImage);
+                }
+                $post->image_path = $imagePath;
+                $post->save();
+            }
+            $post->title = $validatedData['title'];
+            $post->content = $validatedData['content'];
+            $post->save();
+
+            return response()->json($post);
+        } catch (\Throwable $th) {
+            if (isset($imagePath)) {
+                \Storage::delete('public/' . $imagePath);
+            }
+            // if(env('APP_DEBUG')){
+            //     throw $th;
+            // }
+            return response()->json($th->getMessage(), 400);
+        }
+
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Post $post)
+    public function destroy($postId)
     {
         //
+        $post = Post::find($postId);
+        if (!$post) {
+            return response()->json(false, 404);
+        }
         $post->delete();
         return response()->json(true);
     }
