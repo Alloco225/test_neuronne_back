@@ -24,10 +24,10 @@ class PostController extends Controller
                 'order' => 'nullable|string|in:asc,desc',
             ]);
 
-            $select = explode(',',$request->select);
-            $validSelects =  Schema::getColumnListing('posts');
+            $select = explode(',', $request->select);
+            $validSelects = Schema::getColumnListing('posts');
             foreach ($select as $value) {
-                if(!in_array($value, $validSelects)){
+                if (!in_array($value, $validSelects)) {
                     throw new \Exception("select value incorrect '$value'");
                 }
             }
@@ -39,29 +39,29 @@ class PostController extends Controller
             $order = $request->order ?? 'desc';
             $posts_unfiltered = Post::all();
             // $posts = $user->posts->when($search, function($query, $search){
-            $posts =  Post::when($search, function($query, $search){
+            $posts = Post::when($search, function ($query, $search) {
                 return $query
-                ->where('title', 'like', "%$search%")
-                ->orWhere('slug', 'like', "%$search%")
-                ->orWhere('content', 'like', "%$search%");
+                    ->where('title', 'like', "%$search%")
+                    ->orWhere('slug', 'like', "%$search%")
+                    ->orWhere('content', 'like', "%$search%");
             })
-            ->when($sortBy, function($query, $sortBy) use ($order){
-                return $query
-                ->when($order, function($query, $order) use ($sortBy){
-                    $query->orderBy($sortBy, $order);
-                });
-            }, function($query) use ($order){
-                return $query->orderBy('last_update', $order);
-            })
-            ->when($select, function($query, $select){
-                return $query->select($select);
-            })
-            ->when($skip, function($query, $skip){
-                return $query->skip($skip);
-            })
-            ->when($limit, function($query, $limit){
-                return $query->limit($limit);
-            })->get();
+                ->when($sortBy, function ($query, $sortBy) use ($order) {
+                    return $query
+                        ->when($order, function ($query, $order) use ($sortBy) {
+                            $query->orderBy($sortBy, $order);
+                        });
+                }, function ($query) use ($order) {
+                    return $query->orderBy('last_update', $order);
+                })
+                ->when($select, function ($query, $select) {
+                    return $query->select($select);
+                })
+                ->when($skip, function ($query, $skip) {
+                    return $query->skip($skip);
+                })
+                ->when($limit, function ($query, $limit) {
+                    return $query->limit($limit);
+                })->get();
             return response()->json([$posts, $posts_unfiltered]);
         } catch (\Throwable $th) {
             // if(env('APP_DEBUG')){
@@ -84,36 +84,48 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'title' => "required|string",
-            'content' => "required",
-            'image_file' => "required|file|mimes:png,jpg",
-        ]);
-        //
-        $imagePath = null;
-        if($request->hasFile('image_file')){
+        try {
+            $validatedData = $request->validate([
+                'title' => "required|string",
+                'content' => "required",
+                'image_file' => "required|file|mimes:png,jpg",
+            ]);
+            $imagePath = null;
+            if ($request->hasFile('image_file')) {
+                $image = $request->file('image_file');
+                $path = $image->storeAs('public/posts', $validatedData['slug'] . '_' . time() . '.' . $image->getClientOriginalExtension());
+                $imagePath = str_replace('public', '', $path);
+            }
+            $post = Post::create([
+                'title' => $validatedData['title'],
+                'content' => $validatedData['content'],
+                'image_path' => $imagePath,
+            ]);
 
+            return response()->json($post);
+        } catch (\Throwable $th) {
+            if (isset($images)) {
+                foreach ($images as $image) {
+                    \Storage::delete('public/' . $image);
+                }
+            }
+            // if(env('APP_DEBUG')){
+            //     throw $th;
+            // }
+            return response()->json($th->getMessage(), 400);
         }
-        $post = Post::create([
-            'title' => $validatedData['title'],
-            'content' => $validatedData['content'],
-        ]);
-
-        return response()->json($post);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Post $post)
+    public function show($slugOrId)
     {
-        //
 
-        return response()->json($post);
-
-    }
-    public function getPostBySlug(Post $post)
-    {
+        $post = Post::where('slug', $slugOrId)->orWhere('id', $slugOrId)->first();
+        if (!$post) {
+            return response()->json(null, 404);
+        }
         return response()->json($post);
     }
 

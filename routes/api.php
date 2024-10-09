@@ -10,5 +10,4 @@ Route::prefix('auth')->group(function () {
     Route::delete('logout', [AuthController::class, 'logout']);
 });
 
-Route::get('posts/{slug}', [PostController::class, 'getPostBySlug']);
 Route::resource('posts', PostController::class);
