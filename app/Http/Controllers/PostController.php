@@ -13,7 +13,7 @@ class PostController extends Controller
      */
     public function index(Request $request)
     {
-        // $user = $request->user();
+        $user = $request->user();
         try {
             $request->validate([
                 'q' => 'nullable|string',
@@ -38,8 +38,8 @@ class PostController extends Controller
             $sortBy = $request->sortBy;
             $order = $request->order ?? 'desc';
             $posts_unfiltered = Post::all();
-            // $posts = $user->posts->when($search, function($query, $search){
-            $posts = Post::when($search, function ($query, $search) {
+            $posts = $user->posts->when($search, function($query, $search){
+            // $posts = Post::when($search, function ($query, $search) {
                 return $query
                     ->where('title', 'like', "%$search%")
                     ->orWhere('slug', 'like', "%$search%")
@@ -84,7 +84,9 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
+        $user = $request->user;
         try {
+
             $validatedData = $request->validate([
                 'title' => "required|string",
                 'content' => "required",
@@ -97,6 +99,7 @@ class PostController extends Controller
                 $imagePath = str_replace('public', '', $path);
             }
             $post = Post::create([
+                'user_id' => $user->id,
                 'title' => $validatedData['title'],
                 'content' => $validatedData['content'],
                 'image_path' => $imagePath,
@@ -117,10 +120,11 @@ class PostController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show($slugOrId)
+    public function show(Request $request, $slugOrId)
     {
-
-        $post = Post::where('slug', $slugOrId)->orWhere('id', $slugOrId)->first();
+        $user = $request->user();
+        // $post = Post::where('slug', $slugOrId)->orWhere('id', $slugOrId)->first();
+        $post = $user->posts->where('slug', $slugOrId)->orWhere('id', $slugOrId)->first();
         if (!$post) {
             return response()->json(null, 404);
         }
@@ -141,9 +145,10 @@ class PostController extends Controller
     public function update(Request $request, $postId)
     {
         try {
-            // $user = $request->user();
+            $user = $request->user();
 
-            $post = Post::findOrFail($postId);
+            // $post = Post::findOrFail($postId);
+            $post = $user->posts->findOrFail($postId);
 
             $validatedData = $request->validate([
                 'title' => "required|string",
@@ -182,10 +187,12 @@ class PostController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($postId)
+    public function destroy(Request $request, $postId)
     {
         //
-        $post = Post::find($postId);
+        $user = $request->user();
+        // $post = Post::find($postId);
+        $post = $user->posts->find($postId);
         if (!$post) {
             return response()->json(false, 404);
         }
