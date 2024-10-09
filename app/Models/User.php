@@ -50,6 +50,14 @@ class User extends Authenticatable
         ];
     }
 
+
+    public function toArray()
+    {
+        $array = parent::toArray();
+        $array['picture_url'] = $this->picture_url;
+        return $array;
+    }
+
     public function getPictureUrlAttribute()
     {
         $img = $this->picture_path;

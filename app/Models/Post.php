@@ -15,6 +15,14 @@ class Post extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'last_update';
 
+
+    public function toArray()
+    {
+        $array = parent::toArray();
+        $array['image_url'] = $this->image_url;
+        return $array;
+    }
+
     protected static function booted(): void
     {
         // * Mettre à jour le slug automatiquement à partir du titre
