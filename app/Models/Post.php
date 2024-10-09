@@ -20,28 +20,42 @@ class Post extends Model
         // * Mettre à jour le slug automatiquement à partir du titre
         // static::created(function (Post $post) {
         static::created(function (Post $post) {
-            $post->slug = Str::slug($post->title);
-            $post->save();
+            $post->updateSlug();
         });
         static::updated(function (Post $post) {
-            $newSlug = Str::slug($post->title);
-
-            if($post->slug != $newSlug){
-                $post->slug = $newSlug;
-                $post->save();
-            }
+            $post->updateSlug();
         });
+    }
+
+    public function updateSlug()
+    {
+        $slug = Str::slug($this->title);
+        if(!$this->slug){
+            if (self::where('slug', $slug)->first()) {
+                throw new \Exception(message: __("validation.unique", ['attribute' => 'title']));
+            }
+        }
+        if ($this->slug == $slug) {
+            return;
+        }
+        $this->slug = $slug;
+        $this->save();
     }
 
     // * image_url attribut calculé
-    public function getImageUrlAttribute(){
+    public function getImageUrlAttribute()
+    {
         return $this->image_path;
     }
 
-
     // ** RELATIONSHIPS
 
-    public function user(){
+    public function author()
+    {
+        return $this->user;
+    }
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 }

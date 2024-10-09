@@ -38,8 +38,8 @@ class PostController extends Controller
             $sortBy = $request->sortBy;
             $order = $request->order ?? 'desc';
             $posts_unfiltered = Post::all();
-            $posts = $user->posts->when($search, function($query, $search){
-            // $posts = Post::when($search, function ($query, $search) {
+
+            $posts = Post::when($search, function($query, $search){
                 return $query
                     ->where('title', 'like', "%$search%")
                     ->orWhere('slug', 'like', "%$search%")
@@ -61,7 +61,11 @@ class PostController extends Controller
                 })
                 ->when($limit, function ($query, $limit) {
                     return $query->limit($limit);
-                })->get();
+                })
+                ->where('user_id', $user->id)
+
+                ->with('user')
+                ->get();
             return response()->json([$posts, $posts_unfiltered]);
         } catch (\Throwable $th) {
             // if(env('APP_DEBUG')){
@@ -84,13 +88,13 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
-        $user = $request->user;
+        $user = $request->user();
         try {
 
             $validatedData = $request->validate([
                 'title' => "required|string",
                 'content' => "required",
-                'image_file' => "required|file|mimes:png,jpg",
+                // 'image_file' => "required|file|mimes:png,jpg",
             ]);
             $imagePath = null;
             if ($request->hasFile('image_file')) {
